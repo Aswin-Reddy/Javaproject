@@ -1,44 +1,124 @@
 import java.util.Random;
 import java.util.Scanner;
+import java.util.ArrayList;
+
+class GameRound {
+    private int roundNumber;
+    private int targetNumber;
+    private int attempts;
+    private long timeTaken;
+
+    public GameRound(int roundNumber, int targetNumber) {
+        this.roundNumber = roundNumber;
+        this.targetNumber = targetNumber;
+        this.attempts = 0;
+        this.timeTaken = 0;
+    }
+
+    public int getRoundNumber() {
+        return roundNumber;
+    }
+
+    public int getTargetNumber() {
+        return targetNumber;
+    }
+
+    public int getAttempts() {
+        return attempts;
+    }
+
+    public void incrementAttempts() {
+        this.attempts++;
+    }
+
+    public long getTimeTaken() {
+        return timeTaken;
+    }
+
+    public void setTimeTaken(long timeTaken) {
+        this.timeTaken = timeTaken;
+    }
+}
+
+class PlayerProfile {
+    private String username;
+    private int totalScore;
+    private int totalRounds;
+
+    public PlayerProfile(String username) {
+        this.username = username;
+        this.totalScore = 0;
+        this.totalRounds = 0;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public int getTotalScore() {
+        return totalScore;
+    }
+
+    public void updateScore(int score) {
+        this.totalScore += score;
+    }
+
+    public void incrementRounds() {
+        this.totalRounds++;
+    }
+
+    public int getTotalRounds() {
+        return totalRounds;
+    }
+}
 
 public class NumberGuessingGame {
 
-    // Enum for difficulty levels
     public enum Difficulty {
         EASY, MEDIUM, HARD
     }
 
-    // Method to generate the random number based on difficulty
-    public static int generateTargetNumber(Difficulty difficulty) {
-        Random random = new Random();
-        int targetNumber = 0;
+    private static PlayerProfile currentPlayer;
+    private static ArrayList<GameRound> gameHistory = new ArrayList<>();
 
-        switch (difficulty) {
-            case EASY:
-                targetNumber = random.nextInt(50) + 1; // 1-50 range
-                break;
-            case MEDIUM:
-                targetNumber = random.nextInt(100) + 1; // 1-100 range
-                break;
-            case HARD:
-                targetNumber = random.nextInt(200) + 1; // 1-200 range
-                break;
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        displayMenu();
+
+        int choice;
+        while (true) {
+            System.out.print("Enter your choice: ");
+            choice = scanner.nextInt();
+            scanner.nextLine(); // Consume the newline character
+
+            switch (choice) {
+                case 1:
+                    startGame();
+                    break;
+                case 2:
+                    viewInstructions();
+                    break;
+                case 3:
+                    viewStats();
+                    break;
+                case 4:
+                    System.out.println("Thank you for playing! Goodbye.");
+                    return;
+                default:
+                    System.out.println("Invalid choice, please try again.");
+            }
         }
-
-        return targetNumber;
     }
 
-    // Method to display the main menu
     public static void displayMenu() {
         System.out.println("Welcome to the Number Guessing Game!");
         System.out.println("1. Start Game");
         System.out.println("2. View Instructions");
-        System.out.println("3. Exit");
-        System.out.print("Enter your choice: ");
+        System.out.println("3. View Stats");
+        System.out.println("4. Exit");
     }
 
-    // Method to display the game instructions
-    public static void displayInstructions() {
+    public static void viewInstructions() {
         System.out.println("\n--- Game Instructions ---");
         System.out.println("The game generates a random number.");
         System.out.println("Your goal is to guess the number.");
@@ -49,46 +129,42 @@ public class NumberGuessingGame {
         System.out.println("-------------------------\n");
     }
 
-    // Method to start the game
-    public static void startGame(Difficulty difficulty) {
+    public static void startGame() {
         Scanner scanner = new Scanner(System.in);
-        int targetNumber = generateTargetNumber(difficulty);
-        int guess = 0;
-        int attempts = 0;
+        System.out.print("Enter your username: ");
+        String username = scanner.nextLine();
+
+        currentPlayer = new PlayerProfile(username);
+        Difficulty difficulty = chooseDifficulty();
 
         System.out.println("Game started with difficulty: " + difficulty);
-        System.out.println("I have selected a number. Try to guess it!");
 
-        // Game loop
-        while (guess != targetNumber) {
-            System.out.print("Enter your guess: ");
-            guess = scanner.nextInt();
-            attempts++;
+        int rounds = 0;
+        int totalScore = 0;
 
-            if (guess < targetNumber) {
-                System.out.println("Too low! Try again.");
-            } else if (guess > targetNumber) {
-                System.out.println("Too high! Try again.");
-            } else {
-                System.out.println("Congratulations! You've guessed the correct number.");
-                System.out.println("It took you " + attempts + " attempts to guess the number.");
+        while (true) {
+            rounds++;
+            GameRound round = playRound(difficulty, rounds);
+            gameHistory.add(round);
+            totalScore += calculateRoundScore(round);
+            currentPlayer.updateScore(totalScore);
+            currentPlayer.incrementRounds();
+
+            System.out.print("Do you want to play another round? (yes/no): ");
+            String playAgain = scanner.nextLine();
+
+            if (!playAgain.equalsIgnoreCase("yes")) {
+                break;
             }
         }
 
-        // Ask if the player wants to play again
-        System.out.print("Do you want to play again? (yes/no): ");
-        String playAgain = scanner.next();
-        if (playAgain.equalsIgnoreCase("yes")) {
-            startGame(difficulty);
-        } else {
-            System.out.println("Thank you for playing! Goodbye.");
-        }
+        System.out.println("Total score: " + totalScore);
+        System.out.println("Total rounds played: " + rounds);
     }
 
-    // Method to choose difficulty
     public static Difficulty chooseDifficulty() {
         Scanner scanner = new Scanner(System.in);
-        Difficulty chosenDifficulty = Difficulty.EASY; // Default difficulty
+        Difficulty chosenDifficulty = Difficulty.EASY;
 
         System.out.println("\nChoose Difficulty:");
         System.out.println("1. Easy (1-50)");
@@ -109,39 +185,85 @@ public class NumberGuessingGame {
                 break;
             default:
                 System.out.println("Invalid choice, defaulting to Easy difficulty.");
-                chosenDifficulty = Difficulty.EASY;
                 break;
         }
 
         return chosenDifficulty;
     }
 
-    // Main game loop with menu
-    public static void main(String[] args) {
+    public static GameRound playRound(Difficulty difficulty, int roundNumber) {
         Scanner scanner = new Scanner(System.in);
-        int choice;
-        boolean exitGame = false;
+        int targetNumber = generateTargetNumber(difficulty);
+        GameRound round = new GameRound(roundNumber, targetNumber);
+        int guess = 0;
+        long startTime = System.currentTimeMillis();
 
-        while (!exitGame) {
-            displayMenu();
+        while (guess != targetNumber) {
+            System.out.print("Enter your guess: ");
+            guess = scanner.nextInt();
+            round.incrementAttempts();
 
-            choice = scanner.nextInt();
-
-            switch (choice) {
-                case 1: // Start the game
-                    Difficulty difficulty = chooseDifficulty();
-                    startGame(difficulty);
-                    break;
-                case 2: // View instructions
-                    displayInstructions();
-                    break;
-                case 3: // Exit the game
-                    System.out.println("Exiting the game...");
-                    exitGame = true;
-                    break;
-                default:
-                    System.out.println("Invalid choice, please try again.");
+            if (guess < targetNumber) {
+                System.out.println("Too low! Try again.");
+            } else if (guess > targetNumber) {
+                System.out.println("Too high! Try again.");
+            } else {
+                long endTime = System.currentTimeMillis();
+                round.setTimeTaken(endTime - startTime);
+                System.out.println("Congratulations! You've guessed the correct number in " + round.getAttempts() + " attempts.");
+                System.out.println("Time taken: " + round.getTimeTaken() + "ms.");
             }
+        }
+
+        return round;
+    }
+
+    public static int calculateRoundScore(GameRound round) {
+        // Let's assume we give score based on number of attempts and time taken
+        int score = 1000;
+        score -= round.getAttempts() * 10;
+        score -= (round.getTimeTaken() / 1000) * 5;  // Penalty for time taken
+
+        if (score < 0) {
+            score = 0;
+        }
+
+        return score;
+    }
+
+    public static int generateTargetNumber(Difficulty difficulty) {
+        Random random = new Random();
+        int targetNumber = 0;
+
+        switch (difficulty) {
+            case EASY:
+                targetNumber = random.nextInt(50) + 1; // 1-50 range
+                break;
+            case MEDIUM:
+                targetNumber = random.nextInt(100) + 1; // 1-100 range
+                break;
+            case HARD:
+                targetNumber = random.nextInt(200) + 1; // 1-200 range
+                break;
+        }
+
+        return targetNumber;
+    }
+
+    public static void viewStats() {
+        if (currentPlayer == null) {
+            System.out.println("No player data found. Please start a game first.");
+            return;
+        }
+
+        System.out.println("Player: " + currentPlayer.getUsername());
+        System.out.println("Total Score: " + currentPlayer.getTotalScore());
+        System.out.println("Total Rounds Played: " + currentPlayer.getTotalRounds());
+        System.out.println("\n--- Game History ---");
+
+        for (GameRound round : gameHistory) {
+            System.out.println("Round " + round.getRoundNumber() + " - Target Number: " + round.getTargetNumber() +
+                    ", Attempts: " + round.getAttempts() + ", Time Taken: " + round.getTimeTaken() + "ms");
         }
     }
 }
