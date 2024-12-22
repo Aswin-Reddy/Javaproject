@@ -1,18 +1,23 @@
 import java.util.Random;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.Date;
 
 class GameRound {
     private int roundNumber;
     private int targetNumber;
     private int attempts;
     private long timeTaken;
+    private Date startTime;
+    private Date endTime;
 
     public GameRound(int roundNumber, int targetNumber) {
         this.roundNumber = roundNumber;
         this.targetNumber = targetNumber;
         this.attempts = 0;
         this.timeTaken = 0;
+        this.startTime = null;
+        this.endTime = null;
     }
 
     public int getRoundNumber() {
@@ -37,6 +42,28 @@ class GameRound {
 
     public void setTimeTaken(long timeTaken) {
         this.timeTaken = timeTaken;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void calculateTimeTaken() {
+        if (startTime != null && endTime != null) {
+            this.timeTaken = endTime.getTime() - startTime.getTime();
+        }
     }
 }
 
@@ -196,7 +223,8 @@ public class NumberGuessingGame {
         int targetNumber = generateTargetNumber(difficulty);
         GameRound round = new GameRound(roundNumber, targetNumber);
         int guess = 0;
-        long startTime = System.currentTimeMillis();
+        Date startTime = new Date();
+        round.setStartTime(startTime);
 
         while (guess != targetNumber) {
             System.out.print("Enter your guess: ");
@@ -208,8 +236,9 @@ public class NumberGuessingGame {
             } else if (guess > targetNumber) {
                 System.out.println("Too high! Try again.");
             } else {
-                long endTime = System.currentTimeMillis();
-                round.setTimeTaken(endTime - startTime);
+                Date endTime = new Date();
+                round.setEndTime(endTime);
+                round.calculateTimeTaken();
                 System.out.println("Congratulations! You've guessed the correct number in " + round.getAttempts() + " attempts.");
                 System.out.println("Time taken: " + round.getTimeTaken() + "ms.");
             }
@@ -219,10 +248,9 @@ public class NumberGuessingGame {
     }
 
     public static int calculateRoundScore(GameRound round) {
-        // Let's assume we give score based on number of attempts and time taken
         int score = 1000;
         score -= round.getAttempts() * 10;
-        score -= (round.getTimeTaken() / 1000) * 5;  // Penalty for time taken
+        score -= (round.getTimeTaken() / 1000) * 5;
 
         if (score < 0) {
             score = 0;
@@ -237,13 +265,13 @@ public class NumberGuessingGame {
 
         switch (difficulty) {
             case EASY:
-                targetNumber = random.nextInt(50) + 1; // 1-50 range
+                targetNumber = random.nextInt(50) + 1; 
                 break;
             case MEDIUM:
-                targetNumber = random.nextInt(100) + 1; // 1-100 range
+                targetNumber = random.nextInt(100) + 1; 
                 break;
             case HARD:
-                targetNumber = random.nextInt(200) + 1; // 1-200 range
+                targetNumber = random.nextInt(200) + 1; 
                 break;
         }
 
